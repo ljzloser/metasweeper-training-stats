@@ -1,0 +1,14 @@
+# 开发环境依赖（插件自身运行时的依赖见 training_stats/requirements.txt）
+-r training_stats/requirements.txt
+PySide6>=6.12.0
+msgspec>=0.20.0
+pyzmq>=27.0,<28
+loguru>=0.7.3
+packaging>=23.2
+cryptography>=50.0.2
+# 主程序模块在导入链上会引用 ms_toollib（例如 shared_types.widgets）
+ms-toollib>=1.6.1
+pytest>=7.4.0
+pytest-qt>=4.2.0
+requests>=2.33.1
+mypy>=1.8.0

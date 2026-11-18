@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+testpaths = ["training_stats/tests"]
+pythonpath = [".", "../Solvable-Minesweeper/src"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
+mypy_path = "../Solvable-Minesweeper/src"
+# 只检查本插件代码；元扫雷源码只作为导入解析目标，不纳入检查范围。
+follow_imports = "skip"
