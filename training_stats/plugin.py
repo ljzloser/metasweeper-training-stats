@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
 
 from plugin_sdk import (
@@ -87,14 +88,17 @@ class TrainingStatsPlugin(BasePlugin[TrainingStatsConfig]):
 
     @classmethod
     def plugin_info(cls) -> PluginInfo:
+        icon = QIcon(str(Path(__file__).resolve().with_name("icon.svg")))
+        if icon.isNull():
+            icon = make_plugin_icon("#1565C0", "T")
         return PluginInfo(
             name="training_stats",
-            version="1.1.0",
+            version="1.1.1",
             author="third-party",
             description=_translate("TrainingStats", "训练统计：胜率、滚动趋势与训练会话分析"),
             display_name=_translate("TrainingStats", "训练统计"),
             window_mode=WindowMode.TAB,
-            icon=make_plugin_icon("#1565C0", "T"),
+            icon=icon,
             other_info=TrainingStatsConfig,
         )
 

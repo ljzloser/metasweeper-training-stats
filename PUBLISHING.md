@@ -11,6 +11,7 @@ metasweeper-training-stats/        <- 你的公开仓库
 ├── training_stats/                <- 唯一插件包目录
 │   ├── __init__.py                <- 必需：导出 BasePlugin 子类
 │   ├── plugin.py
+│   ├── icon.svg                   <- 随插件包安装，与 plugin.py 同级
 │   ├── stats.py
 │   ├── widgets.py
 │   ├── requirements.txt           <- 插件运行依赖
