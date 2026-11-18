@@ -12,19 +12,10 @@ import pandas as pd
 
 from shared_types.enums import GameBoardState, GameLevel, GameMode
 
+from .i18n import tr
+
 WIN = int(GameBoardState.Win.value)
 FAIL = int(GameBoardState.Fail.value)
-
-_LEVEL_NAMES = {
-    int(GameLevel.BEGINNER.value): "初级",
-    int(GameLevel.INTERMEDIATE.value): "中级",
-    int(GameLevel.EXPERT.value): "高级",
-    int(GameLevel.CUSTOM.value): "自定义",
-}
-_MODE_NAMES = {
-    mode.value: mode.display_name
-    for mode in GameMode
-}
 
 _COLUMNS = [
     "replay_id", "start_time", "end_time", "rtime", "level", "mode", "nf",
@@ -39,11 +30,17 @@ FROM history
 
 
 def level_name(level: int) -> str:
-    return _LEVEL_NAMES.get(int(level), str(level))
+    try:
+        return GameLevel(int(level)).display_name
+    except ValueError:
+        return str(level)
 
 
 def mode_name(mode: int) -> str:
-    return _MODE_NAMES.get(int(mode), str(mode))
+    try:
+        return GameMode(int(mode)).display_name
+    except ValueError:
+        return str(mode)
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +66,8 @@ class StatsResult:
     trend: dict[str, list[float]] = field(default_factory=dict)
     sessions: pd.DataFrame = field(default_factory=pd.DataFrame)
     recent: pd.DataFrame = field(default_factory=pd.DataFrame)
+    levels: pd.DataFrame = field(default_factory=pd.DataFrame)
+    modes: pd.DataFrame = field(default_factory=pd.DataFrame)
     error: str = ""
 
     @property
@@ -132,7 +131,17 @@ def _prepare_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
         else ("失败" if row["is_loss"] else "其它"),
         axis=1,
     )
+    df["streak"] = _win_streaks(df)
     return df
+
+
+def _win_streaks(df: pd.DataFrame) -> pd.Series:
+    """按时间顺序计算每局结束时的当前连胜/连败（正数为连胜）。"""
+    ordered = df.sort_values("end_time", kind="stable")
+    outcome = ordered["is_win"].astype(int) - ordered["is_loss"].astype(int)
+    groups = outcome.ne(outcome.shift()).cumsum()
+    streak = (outcome.groupby(groups).cumcount() + 1) * outcome
+    return streak.reindex(df.index).fillna(0).astype(int)
 
 
 def _overview(df: pd.DataFrame, attempts: int) -> dict[str, Any]:
@@ -146,6 +155,9 @@ def _overview(df: pd.DataFrame, attempts: int) -> dict[str, Any]:
     best_bbbv_s = float(timed["bbbv_s"].max()) if not timed.empty else 0.0
     avg_time = float(timed["time_s"].mean()) if not timed.empty else 0.0
     avg_bbbv_s = float(timed["bbbv_s"].mean()) if not timed.empty else 0.0
+    ordered = df.sort_values("end_time", kind="stable")
+    current_streak = int(ordered["streak"].iloc[-1]) if not ordered.empty else 0
+    best_streak = int(ordered["streak"].max()) if not ordered.empty else 0
     return {
         "attempts": attempts,
         "total": total,
@@ -159,7 +171,33 @@ def _overview(df: pd.DataFrame, attempts: int) -> dict[str, Any]:
         "avg_bbbv_s": avg_bbbv_s,
         "avg_click_eff": float(wins["click_eff"].mean()) if not wins.empty else 0.0,
         "avg_ioe": float(wins["ioe"].mean()) if not wins.empty else 0.0,
+        "avg_clicks": float(df["cl"].mean()) if not df.empty else 0.0,
+        "total_clicks": int(df["cl"].sum()),
+        "current_streak": current_streak,
+        "best_streak": max(0, best_streak),
     }
+
+
+def _group_stats(df: pd.DataFrame, column: str, label: str) -> pd.DataFrame:
+    """按难度或模式汇总局数、胜率、最佳与平均用时。"""
+    columns = [label, "局数", "胜场", "胜率", "最佳用时", "平均用时"]
+    if df.empty:
+        return pd.DataFrame(columns=columns)
+    rows: list[dict[str, Any]] = []
+    for name, group in df.groupby(column, sort=True):
+        wins = group[group["is_win"]]
+        timed = wins[wins["time_s"] > 0]
+        rows.append({
+            label: str(name),
+            "局数": int(len(group)),
+            "胜场": int(len(wins)),
+            "胜率": round(len(wins) / len(group) * 100, 1),
+            "最佳用时": round(float(timed["time_s"].min()), 3)
+            if not timed.empty else 0.0,
+            "平均用时": round(float(timed["time_s"].mean()), 3)
+            if not timed.empty else 0.0,
+        })
+    return pd.DataFrame(rows, columns=columns)
 
 
 def _trend(df: pd.DataFrame, window: int) -> dict[str, list[float]]:
@@ -167,7 +205,8 @@ def _trend(df: pd.DataFrame, window: int) -> dict[str, list[float]]:
     window = max(1, int(window))
     win_rate = ordered["is_win"].astype(float).rolling(
         window, min_periods=1).mean() * 100
-    win_time = ordered["time_s"].where(ordered["is_win"]).rolling(
+    win_time = ordered["time_s"].where(
+        ordered["is_win"] & (ordered["time_s"] > 0)).rolling(
         window, min_periods=1).mean().fillna(0.0)
     return {
         "x": list(range(1, len(ordered) + 1)),
@@ -189,6 +228,7 @@ def _sessions(df: pd.DataFrame, gap_minutes: int) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     for _, group in ordered.groupby("session_id", sort=False):
         wins = group[group["is_win"]]
+        timed_wins = wins[wins["time_s"] > 0]
         start = pd.to_datetime(int(group["start_time"].min()), unit="us")
         end = pd.to_datetime(int(group["end_time"].max()), unit="us")
         seconds = max(0, int((end - start).total_seconds()))
@@ -197,8 +237,8 @@ def _sessions(df: pd.DataFrame, gap_minutes: int) -> pd.DataFrame:
             "局数": int(len(group)),
             "胜场": int(len(wins)),
             "胜率": round(len(wins) / len(group) * 100, 1),
-            "最佳用时": round(float(wins["time_s"].min()), 3)
-            if not wins.empty else 0.0,
+            "最佳用时": round(float(timed_wins["time_s"].min()), 3)
+            if not timed_wins.empty else 0.0,
             "时长": f"{seconds // 3600:02d}:{seconds % 3600 // 60:02d}:{seconds % 60:02d}",
         })
     return pd.DataFrame(rows).iloc[::-1].reset_index(drop=True)
@@ -206,7 +246,7 @@ def _sessions(df: pd.DataFrame, gap_minutes: int) -> pd.DataFrame:
 
 _RECENT_COLUMNS = [
     "结束时间", "难度", "模式", "结果", "用时(s)", "3BV/s", "有效率",
-    "3BV", "点击数", "NF",
+    "3BV", "点击数", "NF", "连胜",
 ]
 
 
@@ -228,6 +268,7 @@ def _recent(df: pd.DataFrame, count: int = 300) -> pd.DataFrame:
         + "/" + recent["bbbv"].astype(int).astype(str),
         "点击数": recent["cl"].astype(int),
         "NF": recent["nf"].map(lambda value: "是" if value else ""),
+        "连胜": recent["streak"].astype(int),
     })
     return result.reset_index(drop=True)
 
@@ -248,6 +289,8 @@ def build_result(
             filters=filters,
             recent=_recent(df),
             sessions=_sessions(df, session_gap_minutes),
+            levels=_group_stats(df, "level_name", "难度"),
+            modes=_group_stats(df, "mode_name", "模式"),
         )
     return StatsResult(
         filters=filters,
@@ -256,6 +299,8 @@ def build_result(
         trend=_trend(df, rolling_window),
         sessions=_sessions(df, session_gap_minutes),
         recent=_recent(df),
+        levels=_group_stats(df, "level_name", "难度"),
+        modes=_group_stats(df, "mode_name", "模式"),
     )
 
 
@@ -269,3 +314,25 @@ def export_rows(history: Any, filters: StatsFilters) -> pd.DataFrame:
     )
     return _recent(_prepare_frame(fetch_history(history, export_filter)),
                    count=1_000_000)
+
+
+def summary_text(result: StatsResult) -> str:
+    """生成可复制的纯文本摘要。"""
+    if not result.has_data:
+        return tr("无数据")
+    overview = result.overview
+    lines = [
+        f"{tr('样本局数')}: {overview.get('attempts', 0)}",
+        f"{tr('胜率')}: {overview.get('win_rate', 0):.1f}%",
+        f"{tr('胜场')}/{tr('失败')}: {overview.get('wins', 0)}/{overview.get('losses', 0)}",
+        f"{tr('最佳用时')}: {overview.get('best_time', 0):.3f}s",
+        f"{tr('平均胜利用时')}: {overview.get('avg_time', 0):.3f}s",
+        f"{tr('最佳 3BV/s')}: {overview.get('best_bbbv_s', 0):.3f}",
+        f"{tr('平均 3BV/s')}: {overview.get('avg_bbbv_s', 0):.3f}",
+        f"{tr('平均有效率')}: {overview.get('avg_click_eff', 0):.3f}",
+        f"{tr('平均 IOE')}: {overview.get('avg_ioe', 0):.3f}",
+        f"{tr('平均点击数')}: {overview.get('avg_clicks', 0):.1f}",
+        f"{tr('当前连胜')}: {overview.get('current_streak', 0)}",
+        f"{tr('最长连胜')}: {overview.get('best_streak', 0)}",
+    ]
+    return "\n".join(lines)

@@ -1,5 +1,5 @@
 # 开发环境依赖（插件运行时依赖）
--r requirements.txt
+-r training_stats/requirements.txt
 PySide6>=6.12.0
 msgspec>=0.20.0
 pyzmq>=27.0,<28

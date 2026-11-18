@@ -10,9 +10,11 @@
 - **趋势**：滚动胜率、滚动平均胜利用时，窗口默认 20 局，可在设置中调整。
 - **会话**：间隔超过 30 分钟（可配置）即切分为新的训练会话，显示会话局数、
   胜场、胜率、最佳用时与时长。
+- **分布与连胜**：按难度、模式汇总胜率和用时，显示当前连胜、最长连胜、点击数；当前连胜为负数表示连败，统计范围受当前筛选和局数限制。
 - **最近对局**：最近 300 局的明细表。
 - **筛选**：难度、模式、仅 NF、统计局数上限。
-- **导出**：按当前筛选导出 CSV。
+- **导出与分享**：按当前筛选导出 CSV，或复制统计摘要。
+- **多语言**：支持简体中文、英语、德语、日语和波兰语，随主程序语言切换。
 
 所有指标只统计符合筛选条件的对局；用时为 0 的记录视为重开/非有效局，
 不计入最佳和平均用时。
@@ -83,11 +85,12 @@ py -3.12 -m venv .venv
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest
-.\.venv\Scripts\python.exe -m mypy plugin.py stats.py widgets.py __init__.py
+.\.venv\Scripts\python.exe -m mypy training_stats
 ```
 
-`conftest.py` 通过 `METASWEEPER_SRC` 环境变量定位元扫雷源码目录，默认使用同级
-`Solvable-Minesweeper/src`；它只把该目录加入 `sys.path`，不激活也不复用其虚拟环境。公开仓库克隆后若未与主程序仓库并列，运行测试前需设置该变量。
+`conftest.py` 通过 `METASWEEPER_SRC` 环境变量定位元扫雷源码目录；未指定时尝试同级或上一级的 `Solvable-Minesweeper/src`。它只把该目录加入 `sys.path`，不激活也不复用其虚拟环境。其他目录布局请设置该变量；类型检查可将相同路径设置为 `MYPYPATH`。
+
+运行 `pyside6-lrelease training_stats/translations/<语言>.ts -qm training_stats/translations/<语言>.qm` 可重新编译翻译；发布时需要同时提交 TS 源文件和 QM 文件。
 
 ## 测试
 

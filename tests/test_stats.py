@@ -112,3 +112,26 @@ def test_empty_history_returns_empty_result() -> None:
     assert result.sessions.empty
     assert result.recent.empty
     assert list(result.recent.columns)[:3] == ["结束时间", "难度", "模式"]
+
+
+def test_streaks_and_group_breakdowns() -> None:
+    history = FakeHistory([
+        _row(1, 0, 10, level=3),
+        _row(2, 20, 12, level=3),
+        _row(3, 40, 8, level=4, state=FAIL),
+        _row(4, 60, 9, level=4, state=FAIL),
+    ])
+    result = build_result(history, StatsFilters())
+    assert result.overview["best_streak"] == 2
+    assert result.overview["current_streak"] == -2
+    assert result.overview["total_clicks"] == 100
+    assert sorted(result.levels["局数"].tolist()) == [2, 2]
+    assert result.recent["连胜"].tolist() == [-2, -1, 2, 1]
+
+
+def test_zero_time_wins_do_not_affect_trends_or_session_best() -> None:
+    result = build_result(FakeHistory([
+        _row(1, 0, 10), _row(2, 20, 0),
+    ]), StatsFilters(), rolling_window=2)
+    assert result.trend["win_time"] == [10, 10]
+    assert result.sessions["最佳用时"].tolist() == [10]

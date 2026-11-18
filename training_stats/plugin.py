@@ -13,7 +13,12 @@ from plugin_sdk import (
     make_plugin_icon,
 )
 
+from utils.plugin_i18n import PluginTranslate
+
+from .i18n import tr
 from .stats import StatsFilters, StatsResult, build_result, export_rows
+
+_translate = PluginTranslate("TrainingStats")
 from .widgets import TrainingStatsWidget, format_summary
 
 
@@ -34,46 +39,46 @@ class TrainingStatsConfig(OtherInfoBase):
 
     rolling_window = IntConfig(
         default=20,
-        label="滚动窗口（局）",
-        description="趋势图和滚动胜率使用的样本窗口",
+        label=_translate("TrainingStats", "滚动窗口（局）"),
+        description=_translate("TrainingStats", "趋势图和滚动胜率使用的样本窗口"),
         min_value=5,
         max_value=500,
         step=5,
     )
     session_gap_minutes = IntConfig(
         default=30,
-        label="会话间隔（分钟）",
-        description="两局间隔超过该时间视为新的训练会话",
+        label=_translate("TrainingStats", "会话间隔（分钟）"),
+        description=_translate("TrainingStats", "两局间隔超过该时间视为新的训练会话"),
         min_value=5,
         max_value=240,
         step=5,
     )
     default_level = IntConfig(
         default=0,
-        label="默认难度",
-        description="0=全部，3=初级，4=中级，5=高级，6=自定义",
+        label=_translate("TrainingStats", "默认难度"),
+        description=_translate("TrainingStats", "0=全部，3=初级，4=中级，5=高级，6=自定义"),
         min_value=0,
         max_value=6,
     )
     default_mode = IntConfig(
         default=-1,
-        label="默认模式",
-        description="-1=全部；其余值参考游戏模式编号",
+        label=_translate("TrainingStats", "默认模式"),
+        description=_translate("TrainingStats", "-1=全部；其余值参考游戏模式编号"),
         min_value=-1,
         max_value=20,
     )
     default_limit = IntConfig(
         default=500,
-        label="默认统计局数",
-        description="0 表示统计全部记录；记录很多时建议保留上限",
+        label=_translate("TrainingStats", "默认统计局数"),
+        description=_translate("TrainingStats", "0 表示统计全部记录；记录很多时建议保留上限"),
         min_value=0,
         max_value=100_000,
         step=100,
     )
     auto_refresh = BoolConfig(
         default=True,
-        label="打开界面时自动刷新",
-        description="打开统计标签页时自动重新计算",
+        label=_translate("TrainingStats", "打开界面时自动刷新"),
+        description=_translate("TrainingStats", "打开统计标签页时自动重新计算"),
     )
 
 
@@ -84,10 +89,10 @@ class TrainingStatsPlugin(BasePlugin[TrainingStatsConfig]):
     def plugin_info(cls) -> PluginInfo:
         return PluginInfo(
             name="training_stats",
-            version="1.0.0",
+            version="1.1.0",
             author="third-party",
-            description="训练统计：胜率、滚动趋势与训练会话分析",
-            display_name="训练统计",
+            description=_translate("TrainingStats", "训练统计：胜率、滚动趋势与训练会话分析"),
+            display_name=_translate("TrainingStats", "训练统计"),
             window_mode=WindowMode.TAB,
             icon=make_plugin_icon("#1565C0", "T"),
             other_info=TrainingStatsConfig,
@@ -153,7 +158,7 @@ class TrainingStatsPlugin(BasePlugin[TrainingStatsConfig]):
 
     def _run_task(self, kind: str, payload: object) -> None:
         if not self._ensure_history():
-            self._notify_error("HistoryService 不可用，请先启用历史记录插件。")
+            self._notify_error(tr("HistoryService 不可用，请先启用历史记录插件。"))
             return
         history = self._history
         config = self.other_info
@@ -185,15 +190,15 @@ class TrainingStatsPlugin(BasePlugin[TrainingStatsConfig]):
         if kind == "result":
             result = payload
             if not isinstance(result, StatsResult):
-                self._notify_error("统计结果类型异常")
+                self._notify_error(tr("统计结果类型异常"))
                 return
             self.logger.info(f"统计完成: {format_summary(result)}")
             self._emit_widget(
                 lambda widget, value: widget._data_signal.emit(value), result)
         elif kind == "exported":
             self._emit_widget(
-                lambda widget, path: widget._status_signal.emit(f"已导出到 {path}"),
-                payload)
+                lambda widget, path: widget._status_signal.emit(
+                    tr("已导出到 {path}").format(path=path)), payload)
         else:
             self._notify_error(str(payload))
 

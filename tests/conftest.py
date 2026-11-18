@@ -12,8 +12,12 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_PACKAGE = PLUGIN_ROOT / "training_stats"
-SRC = Path(os.environ.get(
-    "METASWEEPER_SRC", PLUGIN_ROOT.parent / "Solvable-Minesweeper" / "src"))
+_DEFAULT_SOURCES = (
+    PLUGIN_ROOT.parent / "Solvable-Minesweeper" / "src",
+    PLUGIN_ROOT.parent.parent / "Solvable-Minesweeper" / "src",
+)
+SRC = Path(os.environ.get("METASWEEPER_SRC") or next(
+    (path for path in _DEFAULT_SOURCES if path.is_dir()), _DEFAULT_SOURCES[0]))
 
 for entry in (str(PLUGIN_ROOT.parent), str(SRC)):
     if entry not in sys.path:
