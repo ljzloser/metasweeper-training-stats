@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-testpaths = ["training_stats/tests"]
+testpaths = ["tests"]
 pythonpath = [".", "../Solvable-Minesweeper/src"]
 addopts = "-q"
 

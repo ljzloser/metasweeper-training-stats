@@ -4,17 +4,19 @@
 
 ## 1. 仓库结构约定
 
-插件仓库的**根目录**必须是插件包本身（即根目录有 `__init__.py`）：
+插件仓库根目录应有一个**一级插件包目录**，且其中包含 `__init__.py`。项目测试和开发说明可放在根目录：
 
 ```
 metasweeper-training-stats/        <- 你的公开仓库
-├── __init__.py                    <- 必需：导出 BasePlugin 子类
-├── plugin.py
-├── stats.py
-├── widgets.py
-├── requirements.txt               <- 可选：插件运行依赖
-├── README.md                      <- 可选：插件管理器里可查看
-└── .metasweeper-plugin.json       <- 安装后自动生成，不要手写
+├── training_stats/                <- 唯一插件包目录
+│   ├── __init__.py                <- 必需：导出 BasePlugin 子类
+│   ├── plugin.py
+│   ├── stats.py
+│   ├── widgets.py
+│   ├── requirements.txt           <- 插件运行依赖
+│   ├── README.md                  <- 插件管理器里可查看
+│   └── .metasweeper-plugin.json   <- 安装时写入插件包目录，不要手写
+└── tests/                         <- 不随插件安装
 ```
 
 ## 2. 版本标签约定

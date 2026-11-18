@@ -42,10 +42,9 @@ pyqtgraph>=0.13
 4. 在「插件依赖环境」中安装本插件依赖；
 5. 重启插件管理器并启用「训练统计」。
 
-也可以手动安装：把 `training_stats` 目录放入程序级的 `plugins/` 或
-`user_plugins/` 目录（此时市场只能显示「已安装」，无法判断版本）。
+也可以手动安装：把本目录复制到程序级的 `plugins/` 或 `user_plugins/` 目录。
 
-发布与索引格式见上级目录的 `PUBLISHING.md`。
+发布与 GitHub Topic / 版本 tag 约定见 [../PUBLISHING.md](../PUBLISHING.md)。
 
 ## 数据来源
 
@@ -84,11 +83,11 @@ py -3.12 -m venv .venv
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest
-.\.venv\Scripts\python.exe -m mypy training_stats
+.\.venv\Scripts\python.exe -m mypy plugin.py stats.py widgets.py __init__.py
 ```
 
 `conftest.py` 通过 `METASWEEPER_SRC` 环境变量定位元扫雷源码目录，默认使用同级
-`Solvable-Minesweeper/src`；它只把该目录加入 `sys.path`，不激活也不复用其虚拟环境。
+`Solvable-Minesweeper/src`；它只把该目录加入 `sys.path`，不激活也不复用其虚拟环境。公开仓库克隆后若未与主程序仓库并列，运行测试前需设置该变量。
 
 ## 测试
 
