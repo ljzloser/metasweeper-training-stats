@@ -98,7 +98,7 @@ class TrainingStatsPlugin(BasePlugin[TrainingStatsConfig]):
             icon = make_plugin_icon("#1565C0", "T")
         return PluginInfo(
             name="training_stats",
-            version="1.1.2",
+            version="1.1.3",
             author="third-party",
             description=_translate("TrainingStats", "训练统计：胜率、滚动趋势与训练会话分析"),
             display_name=_translate("TrainingStats", "训练统计"),

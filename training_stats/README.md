@@ -1,4 +1,4 @@
-# training_stats
+# 训练统计
 
 第三方训练统计插件：复用元扫雷「历史记录」插件的数据，展示训练进度，
 不修改、不重复存储对局数据。
@@ -44,9 +44,9 @@ pyqtgraph>=0.13
 4. 在「插件依赖环境」中安装本插件依赖；
 5. 重启插件管理器并启用「训练统计」。
 
-也可以手动安装：把本目录复制到程序级的 `plugins/` 或 `user_plugins/` 目录。
+也可以手动安装：把仓库中的 `training_stats/` 目录复制到元扫雷的 `plugins/` 或 `user_plugins/` 目录，然后按上述步骤安装依赖并启用插件。
 
-发布与 GitHub Topic / 版本 tag 约定见 [../PUBLISHING.md](../PUBLISHING.md)。
+发布与 GitHub Topic / 版本 tag 约定见 [发布指南](https://github.com/ljzloser/metasweeper-training-stats/blob/main/PUBLISHING.md)。
 
 ## 数据来源
 
@@ -91,10 +91,3 @@ py -3.12 -m venv .venv
 `conftest.py` 通过 `METASWEEPER_SRC` 环境变量定位元扫雷源码目录；未指定时尝试同级或上一级的 `Solvable-Minesweeper/src`。它只把该目录加入 `sys.path`，不激活也不复用其虚拟环境。其他目录布局请设置该变量；类型检查可将相同路径设置为 `MYPYPATH`。
 
 运行 `pyside6-lrelease training_stats/translations/<语言>.ts -qm training_stats/translations/<语言>.qm` 可重新编译翻译；发布时需要同时提交 TS 源文件和 QM 文件。
-
-## 测试
-
-```powershell
-cd <本仓库根目录>
-.\.venv\Scripts\python.exe -m pytest
-```
