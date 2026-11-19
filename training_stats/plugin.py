@@ -23,9 +23,14 @@ _translate = PluginTranslate("TrainingStats")
 from .widgets import TrainingStatsWidget, format_summary
 
 
-def _history_protocol() -> type:
-    """延迟导入：HistoryService 由历史记录插件提供。"""
-    from plugins.services.history import HistoryService
+def _history_protocol() -> type | None:
+    """延迟导入历史记录插件提供的接口。"""
+    try:
+        from plugins.services.history import HistoryService
+    except ModuleNotFoundError as exc:
+        if exc.name not in {"plugins", "plugins.services", "plugins.services.history"}:
+            raise
+        return None
     return HistoryService
 
 
@@ -93,7 +98,7 @@ class TrainingStatsPlugin(BasePlugin[TrainingStatsConfig]):
             icon = make_plugin_icon("#1565C0", "T")
         return PluginInfo(
             name="training_stats",
-            version="1.1.1",
+            version="1.1.2",
             author="third-party",
             description=_translate("TrainingStats", "训练统计：胜率、滚动趋势与训练会话分析"),
             display_name=_translate("TrainingStats", "训练统计"),
@@ -151,7 +156,7 @@ class TrainingStatsPlugin(BasePlugin[TrainingStatsConfig]):
         if self._history is not None:
             return True
         protocol = _history_protocol()
-        if self.wait_for_service(protocol, timeout=timeout) is None:
+        if protocol is None or self.wait_for_service(protocol, timeout=timeout) is None:
             return False
         self._history = self.get_service_proxy(protocol)
         self.logger.info("TrainingStats 已连接 HistoryService")

@@ -50,7 +50,7 @@ pyqtgraph>=0.13
 
 ## 数据来源
 
-只调用 `HistoryService.raw_query` 读取 `history` 表，字段包括
+只调用历史记录插件提供的 `HistoryService.raw_query` 读取 `history` 表。通过插件市场安装历史记录时，请选择 `1.0.1` 或更新版本。读取的字段包括
 `rtime / level / mode / nf / game_state / bbbv / bbbv_solved / cl / ce /
 start_time / end_time`。不写数据库，也不需要额外的数据目录。
 
