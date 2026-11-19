@@ -91,3 +91,7 @@ py -3.12 -m venv .venv
 `conftest.py` 通过 `METASWEEPER_SRC` 环境变量定位元扫雷源码目录；未指定时尝试同级或上一级的 `Solvable-Minesweeper/src`。它只把该目录加入 `sys.path`，不激活也不复用其虚拟环境。其他目录布局请设置该变量；类型检查可将相同路径设置为 `MYPYPATH`。
 
 运行 `pyside6-lrelease training_stats/translations/<语言>.ts -qm training_stats/translations/<语言>.qm` 可重新编译翻译；发布时需要同时提交 TS 源文件和 QM 文件。
+
+## 许可证
+
+本仓库的原创插件代码采用 [0BSD 许可证](LICENSE)。第三方代码及素材遵循各自的许可证或授权条款。
